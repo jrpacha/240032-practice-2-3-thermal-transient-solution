@@ -35,7 +35,7 @@ h = (b-a)/numDiv;
 
 tini = 0;
 tfin = 0.2;
-dt = 0.001;
+dt = 0.01;
 t = tini:dt:tfin; %Time ticks where the (apprximate) solution is computed
 alpha = 0.5;      %Crank-Nicolson
 
@@ -131,7 +131,7 @@ for i = 1:length(t)
     drawnow;
     delete(tt);
     delete(ff);
-    %pause(0.0025);
+    %pause(0.005);
 end
 plot(nodes(freeNodes), u_t);
 text(nodes(end)-0.2, 50,  ['t =' num2str(t(i))]);  
