@@ -71,7 +71,7 @@ end
 
 %Boundary conditions (BC)
 fixedNodes = [1, numNod]; %Fixed nodes (nodes where u is fixed)
-freeNodes = setdiff(1:numNod, fixedNodes);
+freeNodes = setdiff(1:numNod,fixedNodes);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                          Stationary Solution                            %
@@ -114,46 +114,30 @@ Am = M(freeNodes,freeNodes)+dt*alpha*K(freeNodes,freeNodes);
 Bm = M(freeNodes,freeNodes)-dt*(1-alpha)*K(freeNodes,freeNodes);
 Fm = dt*Q_t;
 
-%Plot curve
-plot(nodes, u_t);
+%Graphical output
+figure()
+plot(nodes, u_t); %plot the initial state of u_t at t = tini
 title('Temperature Distribution')
 xlabel('$x$', 'Interpreter','latex')
 ylabel('Temperature','Interpreter','latex')
 hold on
 plot(nodes, uStat, 'g') %Plot stationary soluiton
-clear u_t;
-u_t = um;
-for i = 1:length(t)
-    u_t = Am\(Bm*u_t+Fm);
-    %plot curve
-    ff = plot(nodes(freeNodes), u_t);
-    tt = text(numDiv-20, 50,  ['t =' num2str(t(i))]);
+
+%Iterate to find the nodal values of u at each time-tick
+for t =tini+dt:dt:tfin
+    um = Am\(Bm*um+Fm);
+    %plot current curve
+    ff = plot(nodes(freeNodes),um);
+    tt = text(nodes(end)-0.2,50,['t =' num2str(t)]);
     drawnow;
+    pause(0.2)
     delete(tt);
     delete(ff);
-    %pause(0.005);
 end
-plot(nodes(freeNodes), u_t);
-text(nodes(end)-0.2, 50,  ['t =' num2str(t(i))]);  
+plot(nodes(freeNodes),um);
+text(nodes(end)-0.2,50,['t =' num2str(t)]);
 hold off
-
-%Precission: compare the difference between the two soluitons
-errorTemp = norm(uStat(freeNodes)-u_t, inf);
+u_t(freeNodes) = um;
+%Precission: compare the difference between the two solutions
+errorTemp = norm(uStat-u_t, inf);
 fprintf("error = ||uStat - u_t||_Inf = %e\n", errorTemp)
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
