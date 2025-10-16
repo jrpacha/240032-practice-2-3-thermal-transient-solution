@@ -27,7 +27,7 @@ uA = 10;
 uB = 60;
 
 %Initial condition
-u_ini = @(x) 10 + 50*sin(pi*x/2);
+Uini = @(x) 10 + 50*sin(pi*x/2);
 
 %FEM: geometry
 a = 0; b = 1; numDiv = 500;
@@ -95,49 +95,63 @@ uStat(freeNodes) = um;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                          Transient Solution                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-Q = zeros(numNod,1);
+%Initial Conditions (for the transient solution)
+u_ini = Uini(nodes);
+%um = u_ini(freeNodes);
+
+%Reamrk: note that in this case in point the essential BC 
+%        do not change with t
 
 %Boundary conditions (BC): Natural BC
-Q(freeNodes) = 0; %Not necessary, since Q has been initalised to 0.
-
-%Initial Conditions
-u_t = u_ini(nodes);
-um = u_t(freeNodes);
-
-%Reamrk: note that that essential BC are the same for each t
+Q = zeros(numNod, 1); %initialize the global Q vector
+Q(freeNodes) = 0; %not necessary, since Q has been initalised to 0.
 
 %Reduced system
-Q_t = Q(freeNodes) - K(freeNodes,fixedNodes)*u_t(fixedNodes);
+Qm = Q(freeNodes) - K(freeNodes,fixedNodes)*uStat(fixedNodes);
+u_present = u_ini(freeNodes); %set inital condition
 
-%System of equtions
+%
+%System of equtions: see equation (9)
+%
 Am = M(freeNodes,freeNodes)+dt*alpha*K(freeNodes,freeNodes);
 Bm = M(freeNodes,freeNodes)-dt*(1-alpha)*K(freeNodes,freeNodes);
-Fm = dt*Q_t;
+Fm = dt*Qm;
 
 %Graphical output
-figure()
-plot(nodes, u_t); %plot the initial state of u_t at t = tini
-title('Temperature Distribution')
-xlabel('$x$', 'Interpreter','latex')
-ylabel('Temperature','Interpreter','latex')
-hold on
-plot(nodes, uStat, 'g') %Plot stationary soluiton
+    figure()
+    plot(nodes, u_ini); %plot the initial state of u_t at t = tini
+    title('Temperature Distribution')
+    xlabel('x')
+    ylabel('temperature')
+    hold on
+    plot(nodes, uStat, 'g') %Plot stationary solution
 
 %Iterate to find the nodal values of u at each time-tick
-for t =tini+dt:dt:tfin
-    um = Am\(Bm*um+Fm);
+for t =tini:dt:tfin-dt %stop one step before, since we compute one step forward
+    nextTime = t + dt;
+    u_next = Am\(Bm*u_present+Fm); %solve the sistem to find u at the next time-tick
     %plot current curve
-    ff = plot(nodes(freeNodes),um);
-    tt = text(nodes(end)-0.2,50,['t =' num2str(t)]);
-    drawnow;
-    pause(0.2)
-    delete(tt);
-    delete(ff);
+        ff = plot(nodes(freeNodes),u_next);
+        tt = text(nodes(end)-0.2, 50, ['t = ' num2str(nextTime)]);
+        drawnow;
+        pause(0.3)
+        delete(tt);
+        delete(ff);
+    %update values
+    u_present = u_next;
 end
-plot(nodes(freeNodes),um);
-text(nodes(end)-0.2,50,['t =' num2str(t)]);
-hold off
-u_t(freeNodes) = um;
+    plot(nodes(freeNodes),u_present);
+    text(nodes(end)-0.2, 50, ['t = ' num2str(nextTime)]);
+    hold off
+%
+%Error
+%
+%Compute the norm of the difference between the stationary and the transient  solution at , i.e., the error :
+u_trans = [u_ini(1); u_present; u_ini(end)];
+
 %Precission: compare the difference between the two solutions
-errorTemp = norm(uStat-u_t, inf);
+errorTemp = norm(uStat-u_trans, inf);
 fprintf("error = ||uStat - u_t||_Inf = %e\n", errorTemp)
+
+%Remark. One might increase the final time, tfin, to get an 
+%        smaller error.
