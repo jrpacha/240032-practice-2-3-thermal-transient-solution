@@ -36,7 +36,7 @@ h = (b-a)/numDiv;
 tini = 0;
 tfin = 0.2;
 dt = 0.01;
-t = tini:dt:tfin; %Time ticks where the (apprximate) solution is computed
+
 alpha = 0.5;      %Crank-Nicolson
 
 a1 = kc*A;
